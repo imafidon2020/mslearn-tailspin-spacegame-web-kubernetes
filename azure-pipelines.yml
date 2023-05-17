@@ -1,9 +1,12 @@
-trigger: none
+trigger:
+- 'main'
 
 variables:
   buildConfiguration: 'Release'
+  leaderboardRepository: 'leaderboard'
   webRepository: 'web'
   tag: '$(Build.BuildId)'
+  imagePullSecret: 'secret'
 
 stages:
 - stage: 'Build'
@@ -33,11 +36,54 @@ stages:
     displayName: 'Deploy job'
     pool:
       vmImage: 'ubuntu-20.04'
+      environment: 'Dev'
     variables:
     - group: Release
     steps:
+    - download: current
+      artifact: manifests
     - task: AzureWebAppContainer@1
       inputs:
        appName: $(WebAppName)
        azureSubscription: 'Resource Manager - Tailspin - Space Game'
        imageName: $(RegistryName)/$(webRepository):$(build.buildId)
+    - task: Docker@2
+      inputs:
+        command: buildAndPush
+        buildContext: $(Build.Repository.LocalPath)
+        repository: $(leaderboardRepository)
+        dockerfile: '$(Build.SourcesDirectory)/Tailspin.SpaceGame.LeaderboardContainer/Dockerfile'
+        containerRegistry: 'Container Registry Connection'
+        tags: |
+         $(tag)
+        
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.SourcesDirectory)/manifests'
+        ArtifactName: 'manifests'
+    - task: KubernetesManifest@1
+      inputs:
+            action: 'createSecret'
+            connectionType: 'azureResourceManager'
+            azureSubscriptionConnection: 'MSDN Platforms Subscription(32dd4adb-ecf0-405f-a617-420166d8a883)'
+            azureResourceGroup: 'tailspin-space-game-rg'
+            kubernetesCluster: 'tailspinspacegame-32350'
+            namespace: 'default'
+            secretType: 'dockerRegistry'
+            secretName: '$(imagePullSecret)'
+            dockerRegistryEndpoint: 'connnectiondocker'
+        
+    - task: KubernetesManifest@1
+      inputs:
+            action: 'deploy'
+            connectionType: 'azureResourceManager'
+            azureSubscriptionConnection: 'MSDN Platforms Subscription(1)(32dd4adb-ecf0-405f-a617-420166d8a883)'
+            azureResourceGroup: 'tailspin-space-game-rg'
+            kubernetesCluster: 'tailspinspacegame-32350'
+            namespace: 'default'
+            manifests: '$(Pipeline.Workspace)/manifests/deployment.yml
+            $(Pipeline.Workspace)/manifests/service.yml'
+            containers: |
+              $(RegistryName)/$(webRepository):$(tag)
+                    $(RegistryName)/$(leaderboardRepository):$(tag)
+            imagePullSecrets: '$(imagePullSecret)'
