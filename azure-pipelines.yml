@@ -63,15 +63,15 @@ stages:
         ArtifactName: 'manifests'
     - task: KubernetesManifest@1
       inputs:
-            action: 'createSecret'
-            connectionType: 'azureResourceManager'
-            azureSubscriptionConnection: 'MSDN Platforms Subscription(32dd4adb-ecf0-405f-a617-420166d8a883)'
-            azureResourceGroup: 'tailspin-space-game-rg'
-            kubernetesCluster: 'tailspinspacegame-32350'
-            namespace: 'default'
-            secretType: 'dockerRegistry'
-            secretName: '$(imagePullSecret)'
-            dockerRegistryEndpoint: 'connnectiondocker'
+        action: 'createSecret'
+        connectionType: 'azureResourceManager'
+        azureSubscriptionConnection: 'Kubernetes Cluster Connection'
+        azureResourceGroup: 'tailspin-space-game-rg'
+        kubernetesCluster: 'tailspinspacegame-32350'
+        namespace: 'default'
+        secretType: 'dockerRegistry'
+        secretName: '$(imagePullSecret)'
+        dockerRegistryEndpoint: 'connnectiondocker'
         
     - task: KubernetesManifest@1
       inputs:
