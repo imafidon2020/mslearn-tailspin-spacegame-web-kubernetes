@@ -75,15 +75,14 @@ stages:
         
     - task: KubernetesManifest@1
       inputs:
-            action: 'deploy'
-            connectionType: 'azureResourceManager'
-            azureSubscriptionConnection: 'MSDN Platforms Subscription(1)(32dd4adb-ecf0-405f-a617-420166d8a883)'
-            azureResourceGroup: 'tailspin-space-game-rg'
-            kubernetesCluster: 'tailspinspacegame-32350'
-            namespace: 'default'
-            manifests: '$(Pipeline.Workspace)/manifests/deployment.yml
-            $(Pipeline.Workspace)/manifests/service.yml'
-            containers: |
-              $(RegistryName)/$(webRepository):$(tag)
-                    $(RegistryName)/$(leaderboardRepository):$(tag)
-            imagePullSecrets: '$(imagePullSecret)'
+        action: 'deploy'
+        connectionType: 'azureResourceManager'
+        azureSubscriptionConnection: 'Kubernetes Cluster Connection'
+        azureResourceGroup: 'tailspin-space-game-rg'
+        kubernetesCluster: 'tailspinspacegame-32350'
+        namespace: 'default'
+        manifests: '$(Pipeline.Workspace)/manifests/deployment.yml $(Pipeline.Workspace)/manifests/service.yml'
+        containers: |
+          $(RegistryName)/$(webRepository):$(tag)
+                $(RegistryName)/$(leaderboardRepository):$(tag)
+        imagePullSecrets: '$(imagePullSecret)'
